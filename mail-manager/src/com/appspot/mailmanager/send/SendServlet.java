@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.appspot.mailmanager.ApplicationManager;
 import com.appspot.mailmanager.Contact;
 import com.appspot.mailmanager.MailException;
 import com.google.appengine.labs.repackaged.org.json.JSONException;
@@ -116,8 +117,7 @@ public class SendServlet extends HttpServlet {
         SendRequest request = null;
 
         try {
-            JSONObject json = new JSONObject(buff.toString());
-            request = new SendRequest(json);
+            request = SendRequest.fromJSON(new JSONObject(buff.toString()));
         } catch (JSONException e) {
             throw new MailException("Invalid data", e);
         }
@@ -129,50 +129,35 @@ public class SendServlet extends HttpServlet {
     /*
      * @see HttpServlet#doGet(HttpServletRequest, HttpServletResponse)
      */
-    public void doGet(HttpServletRequest req, HttpServletResponse resp) {
+    public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         log.entering(CLASS_NAME, "doGet", new Object[] { req, resp });
 
         SendRequest request = null;
+        SendResponse response = null;
 
         try {
             request = deriveSendRequest(req);
-            if (!isValidApiKey(request.getApiKey())) {
+
+            if (!ApplicationManager.getInstance().exists(request.getApiKey())) {
                 throw new MailException("Unrecognized API key");
-            }
-            if (request.getHtml() == null && request.getText() == null) {
+            } else if (!ApplicationManager.getInstance().isEnabled(request.getApiKey())) {
+                throw new MailException("Disabled API key");
+            } else if (request.getHtml() == null && request.getText() == null) {
                 throw new MailException("Missing content");
             }
 
             sendMail(request);
 
-            resp.setContentType("application/json");
-            try {
-                // TODO: Send success response
-                resp.getWriter().println("Hello, world");
-            } catch (IOException e) {
-                throw new MailException("Could not respond", e);
-            }
+            response = new SendResponse(200);
         } catch (MailException e) {
-            // TODO: Handle errors
+            response = new SendResponse(500, e.getMessage());
         }
 
+        resp.setStatus(response.getStatus());
+        resp.setContentType("application/json");
+        resp.getWriter().println(response.toJSON().toString());
+
         log.exiting(CLASS_NAME, "doGet");
-    }
-
-    /**
-     * TODO: JavaDoc
-     * 
-     * @param apiKey
-     * @return
-     */
-    private boolean isValidApiKey(String apiKey) {
-        log.entering(CLASS_NAME, "isValidApiKey", apiKey);
-
-        boolean valid = false;
-        // TODO: Read WEB-INF/application.properties and check for API key
-
-        log.exiting(CLASS_NAME, "isValidApiKey", valid);
-        return valid;
     }
 
     /**

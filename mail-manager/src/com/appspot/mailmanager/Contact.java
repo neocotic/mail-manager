@@ -35,14 +35,12 @@ import com.google.appengine.labs.repackaged.org.json.JSONObject;
  */
 public class Contact {
 
-    private String email;
-    private String name;
-
     /**
      * Creates a new instance of {@link Contact} based on the values derived from the specified {@code json}.
      * 
      * @param json
      *            the {@code JSONObject} from which the details are to be derived
+     * @return The {@code Contact} derived from {@code json}.
      * @throws IllegalArgumentException
      *             If the derived email address is empty.
      * @throws JSONException
@@ -50,9 +48,12 @@ public class Contact {
      * @throws NullPointerException
      *             If {@code json} is {@code null}.
      */
-    public Contact(JSONObject json) throws JSONException {
-        this(json.getString("email"), json.optString("name"));
+    public static Contact fromJSON(JSONObject json) throws JSONException {
+        return new Contact(json.getString("email"), json.optString("name"));
     }
+
+    private String email;
+    private String name;
 
     /**
      * Creates a new instance of {@link Contact} with no name and the {@code email} address provided.
@@ -82,19 +83,21 @@ public class Contact {
     }
 
     /**
-     * TODO: JavaDoc
+     * Returns the email address of this {@link Contact}.
      * 
-     * @return
+     * @return The email address.
      */
     public String getEmail() {
         return email;
     }
 
     /**
-     * TODO: JavaDoc
+     * Sets the email address of this {@link Contact} to {@code email}.
      * 
      * @param email
+     *            the email address to be set
      * @throws IllegalArgumentException
+     *             If {@code email} is either {@code null} or empty.
      */
     public void setEmail(String email) {
         if (email == null || email.isEmpty()) {
@@ -104,35 +107,48 @@ public class Contact {
     }
 
     /**
-     * TODO: JavaDoc
+     * Return the name of this {@link Contact}.
      * 
-     * @return
+     * @return The name.
      */
     public String getName() {
         return name;
     }
 
     /**
-     * TODO: JavaDoc
+     * Sets the name of this {@link Contact} to {@code name}.
      * 
      * @param name
+     *            the name to be set
      */
     public void setName(String name) {
         this.name = name;
     }
 
     /**
+     * Creates an {@code InternetAddress} using the details provided by this {@link Contact}.
+     * 
+     * @return The derived {@code InternetAddress}.
+     * @throws AddressException
+     *             If this contact's email address is invalid.
+     * @throws UnsupportedEncodingException
+     *             If this contact's name is invalid.
+     */
+    public InternetAddress toInternetAddress() throws AddressException, UnsupportedEncodingException {
+        InternetAddress address = new InternetAddress(email);
+        if (name != null) {
+            address.setPersonal(name);
+        }
+        return address;
+    }
+
+    /**
      * TODO: JavaDoc
      * 
      * @return
-     * @throws AddressException
-     * @throws UnsupportedEncodingException
      */
-    public InternetAddress toInternetAddress() throws AddressException, UnsupportedEncodingException {
-        if (name == null) {
-            return new InternetAddress(email);
-        }
-        return new InternetAddress(email, name);
+    public JSONObject toJSON() {
+        return new JSONObject(this);
     }
 
     /*

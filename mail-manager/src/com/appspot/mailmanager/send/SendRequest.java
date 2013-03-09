@@ -24,6 +24,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.appspot.mailmanager.Contact;
+import com.google.appengine.labs.repackaged.org.json.JSONArray;
 import com.google.appengine.labs.repackaged.org.json.JSONException;
 import com.google.appengine.labs.repackaged.org.json.JSONObject;
 
@@ -34,6 +35,35 @@ import com.google.appengine.labs.repackaged.org.json.JSONObject;
  */
 public class SendRequest {
 
+    /**
+     * Creates a new instance of {@link SendRequest} based on the values derived from the specified {@code json}.
+     * 
+     * @param json
+     *            the {@code JSONObject} from which the details are to be derived
+     * @return The {@code SendRequest} derived from {@code json}.
+     * @throws IllegalArgumentException
+     *             If any of the required derived values are invalid.
+     * @throws JSONException
+     *             If {@code json} is malformed.
+     * @throws NullPointerException
+     *             If {@code json} is {@code null}.
+     */
+    public static SendRequest fromJSON(JSONObject json) throws JSONException {
+        SendRequest request = new SendRequest();
+        request.setApiKey(json.getString("apiKey"));
+        request.setHtml(json.optString("html"));
+        request.setSender(Contact.fromJSON(json.getJSONObject("sender")));
+        request.setSubject(json.getString("subject"));
+        request.setText(json.optString("text"));
+
+        JSONArray recipients = json.getJSONArray("recipients");
+        for (int i = 0; i < recipients.length(); i++) {
+            request.addRecipient(Contact.fromJSON(recipients.getJSONObject(i)));
+        }
+
+        return request;
+    }
+
     private String apiKey;
     private String html;
     private Set<Contact> recipients = new LinkedHashSet<>();
@@ -42,24 +72,18 @@ public class SendRequest {
     private String text;
 
     /**
-     * Creates a new instance of {@link SendRequest} based on the values derived from the specified {@code json}.
-     * 
-     * @param json
-     *            the {@code JSONObject} from which the details are to be derived
-     * @throws IllegalArgumentException
-     * @throws JSONException
-     * @throws NullPointerException
-     *             If {@code json} is {@code null}.
+     * Creates a new instance of {@link SendRequest}.
      */
-    public SendRequest(JSONObject json) throws JSONException {
-        // TODO: Dervice values from json
+    private SendRequest() {
     }
 
     /**
-     * TODO: JavaDoc
+     * Adds the specified {@link Contact} to the list of recipients for the message.
      * 
      * @param recipient
+     *            the {@code Contact} to receive the message
      * @throws IllegalArgumentException
+     *             If {@code recipient} is {@code null}.
      */
     public void addRecipient(Contact recipient) {
         if (recipient == null) {
@@ -69,40 +93,47 @@ public class SendRequest {
     }
 
     /**
-     * TODO: JavaDoc
+     * Adds a {@link Contact} with the specified {@code email} address to the list of recipients for the message.
      * 
      * @param email
+     *            the email address of the {@code Contact} to receive the message
      * @throws IllegalArgumentException
+     *             If {@code email} is {@code null} or empty.
      */
     public void addRecipient(String email) {
         addRecipient(email, null);
     }
 
     /**
-     * TODO: JavaDoc
+     * Adds a {@link Contact} with the specified {@code email} address and {@code name} to the list of recipients for the message.
      * 
      * @param email
+     *            the email address of the {@code Contact} to receive the message
      * @param name
+     *            the name of the {@code Contact} to receive the message
      * @throws IllegalArgumentException
+     *             If {@code email} is {@code null} or empty.
      */
     public void addRecipient(String email, String name) {
         addRecipient(new Contact(email, name));
     }
 
     /**
-     * TODO: JavaDoc
+     * Returns the API key of the application making this request.
      * 
-     * @return
+     * @return The API key.
      */
     public String getApiKey() {
         return apiKey;
     }
 
     /**
-     * TODO: JavaDoc
+     * Sets the API key of the application making this request to {@code apiKey}.
      * 
      * @param apiKey
+     *            the API key to be set
      * @throws IllegalArgumentException
+     *             If {@code apiKey} is {@code null} or empty.
      */
     public void setApiKey(String apiKey) {
         if (apiKey == null || apiKey.isEmpty()) {
@@ -112,46 +143,52 @@ public class SendRequest {
     }
 
     /**
-     * TODO: JavaDoc
+     * Returns the HTML content for the message.
+     * <p>
+     * If this returns {@code null}, it might be worth checking the text content to see if the request is to send plain text in the message.
      * 
-     * @return
+     * @return The HTML content.
+     * @see #getText()
      */
     public String getHtml() {
         return html;
     }
 
     /**
-     * TODO: JavaDoc
+     * Sets the HTML content for the message to {@code html}.
      * 
      * @param html
+     *            the HTML to be set
      */
     public void setHtml(String html) {
         this.html = html;
     }
 
     /**
-     * TODO: JavaDoc
+     * Returns the {@link Contact Contacts} that are to receive the message.
      * 
-     * @return
+     * @return The {@code Set} of recipients.
      */
     public Set<Contact> getRecipients() {
         return recipients;
     }
 
     /**
-     * TODO: JavaDoc
+     * Returns the {@link Contact} that is sending the message.
      * 
-     * @return
+     * @return The sender.
      */
     public Contact getSender() {
         return sender;
     }
 
     /**
-     * TODO: JavaDoc
+     * Sets the {@link Contact} that is sending the message to {@code sender}.
      * 
      * @param sender
+     *            the {@code Contact} to be set
      * @throws IllegalArgumentException
+     *             If {@code Contact} is {@code null}.
      */
     public void setSender(Contact sender) {
         if (sender == null) {
@@ -161,40 +198,47 @@ public class SendRequest {
     }
 
     /**
-     * TODO: JavaDoc
+     * Sets the {@link Contact} that is sending the message to one with the {@code email} address provided.
      * 
      * @param email
+     *            the email address of the {@code Contact} to be set
      * @throws IllegalArgumentException
+     *             If {@code email} is {@code null} or empty.
      */
     public void setSender(String email) {
         setSender(email, null);
     }
 
     /**
-     * TODO: JavaDoc
+     * Sets the {@link Contact} that is sending the message to one with the {@code email} address and {@code name} provided.
      * 
      * @param email
+     *            the email address of the {@code Contact} to be set
      * @param name
+     *            the name of the {@code Contact} to be set
      * @throws IllegalArgumentException
+     *             If {@code email} is {@code null} or empty.
      */
     public void setSender(String email, String name) {
         setSender(new Contact(email, name));
     }
 
     /**
-     * TODO: JavaDoc
+     * Returns the subject for the message.
      * 
-     * @return
+     * @return The subject.
      */
     public String getSubject() {
         return subject;
     }
 
     /**
-     * TODO: JavaDoc
+     * Sets the subject for the message to {@code subject}.
      * 
      * @param subject
+     *            the subject to be set
      * @throws IllegalArgumentException
+     *             If {@code subject} is {@code null} or empty.
      */
     public void setSubject(String subject) {
         if (subject == null || subject.isEmpty()) {
@@ -204,21 +248,35 @@ public class SendRequest {
     }
 
     /**
-     * TODO: JavaDoc
+     * Returns the text content for the message.
+     * <p>
+     * If this returns {@code null}, it might be worth checking the HTML content to see if the request is to send HTML in the message.
      * 
-     * @return
+     * @return The text content.
+     * @see #getHtml()
      */
     public String getText() {
         return text;
     }
 
     /**
-     * TODO: JavaDoc
+     * Sets the text content for the message to {@code text}.
      * 
      * @param text
+     *            the text to be set
      */
     public void setText(String text) {
         this.text = text;
+    }
+
+    /**
+     * TODO: JavaDoc
+     * 
+     * @return
+     */
+    public JSONObject toJSON() {
+        // TODO: Test sender/recipients are handled correctly here
+        return new JSONObject(this);
     }
 
     /*
