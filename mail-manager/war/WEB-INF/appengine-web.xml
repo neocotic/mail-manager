@@ -3,9 +3,6 @@
     <application>mail-manager</application>
     <version>1</version>
     <threadsafe>true</threadsafe>
-    <resource-files>
-        <include path="WEB-INF/application.properties" />
-    </resource-files>
     <system-properties>
         <property name="java.util.logging.config.file" value="WEB-INF/logging.properties" />
     </system-properties>

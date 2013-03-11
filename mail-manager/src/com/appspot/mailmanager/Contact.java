@@ -29,18 +29,33 @@ import com.google.appengine.labs.repackaged.org.json.JSONException;
 import com.google.appengine.labs.repackaged.org.json.JSONObject;
 
 /**
- * TODO: JavaDoc
+ * Contains basic information for a mail contact.
  * 
  * @author Alasdair Mercer <mercer.alasdair@gmail.com>
  */
 public class Contact {
 
     /**
+     * Creates a new instance of {@link Contact} based on the values derived from the specified {@code address}.
+     * 
+     * @param address
+     *            the {@code InternetAddress} from which the details are to be derived.
+     * @return The {@link Contact} derived from {@code address}.
+     * @throws IllegalArgumentException
+     *             If the derived email address is {@code null} or empty.
+     * @throws NullPointerException
+     *             If {@code address} is {@code null}.
+     */
+    public Contact fromInternetAddress(InternetAddress address) {
+        return new Contact(address.getAddress(), address.getPersonal());
+    }
+
+    /**
      * Creates a new instance of {@link Contact} based on the values derived from the specified {@code json}.
      * 
      * @param json
      *            the {@code JSONObject} from which the details are to be derived
-     * @return The {@code Contact} derived from {@code json}.
+     * @return The {@link Contact} derived from {@code json}.
      * @throws IllegalArgumentException
      *             If the derived email address is empty.
      * @throws JSONException
@@ -143,12 +158,18 @@ public class Contact {
     }
 
     /**
-     * TODO: JavaDoc
+     * Creates a {@code JSONObject} based on this {@link Contact}.
      * 
-     * @return
+     * @return The derived {@code JSONObject}.
+     * @throws JSONException
+     *             If this {@link Contact} is malformed.
      */
-    public JSONObject toJSON() {
-        return new JSONObject(this);
+    public JSONObject toJSON() throws JSONException {
+        JSONObject json = new JSONObject();
+        json.put("email", email);
+        json.putOpt("name", name);
+
+        return json;
     }
 
     /*

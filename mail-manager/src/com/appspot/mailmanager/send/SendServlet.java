@@ -40,14 +40,16 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.appspot.mailmanager.ApplicationManager;
 import com.appspot.mailmanager.Contact;
 import com.appspot.mailmanager.MailException;
+import com.appspot.mailmanager.application.ApplicationManager;
 import com.google.appengine.labs.repackaged.org.json.JSONException;
 import com.google.appengine.labs.repackaged.org.json.JSONObject;
 
 /**
- * TODO: JavaDoc
+ * The servlet responsible for sending emails on behalf of registered {@link Application Applications}. The responses are very simple JSON strings.
+ * <p>
+ * Only requests containing a valid API key will be completed.
  * 
  * @author Alasdair Mercer <mercer.alasdair@gmail.com>
  */
@@ -58,11 +60,16 @@ public class SendServlet extends HttpServlet {
     private static final Logger log = Logger.getLogger(CLASS_NAME);
 
     /**
-     * TODO: JavaDoc
+     * Adds the plain text or HTML contents to the {@code message} accordingly.
+     * <p>
+     * Either plain text or HTML contents may be added to the {@code message}, but never both.
      * 
      * @param message
+     *            the {@code Message} to which the contents are to be added
      * @param request
+     *            the {@link SendRequest} containing the contents
      * @throws MessagingException
+     *             If an error occurs while adding the contents.
      */
     private void addContent(Message message, SendRequest request) throws MessagingException {
         log.entering(CLASS_NAME, "addContent", new Object[] { message, request });
@@ -83,11 +90,14 @@ public class SendServlet extends HttpServlet {
     }
 
     /**
-     * TODO: JavaDoc
+     * 
+     * Builds a {@link SendRequest} based on JSON data contained within the body of {@code req}.
      * 
      * @param req
-     * @return
+     *            the {@code HttpServletRequest} to be read
+     * @return The {@link SendRequest} derived from the body of {@code req}.
      * @throws MailException
+     *             If an {@code IOException} occurs when reading the body of {@code req} or a {@code JSONException} occurs while parsing the body into JSON.
      */
     private SendRequest deriveSendRequest(HttpServletRequest req) throws MailException {
         log.entering(CLASS_NAME, "deriveSendRequest", req);
@@ -118,7 +128,7 @@ public class SendServlet extends HttpServlet {
 
         try {
             request = SendRequest.fromJSON(new JSONObject(buff.toString()));
-        } catch (JSONException e) {
+        } catch (IllegalArgumentException | JSONException e) {
             throw new MailException("Invalid data", e);
         }
 
@@ -138,10 +148,8 @@ public class SendServlet extends HttpServlet {
         try {
             request = deriveSendRequest(req);
 
-            if (!ApplicationManager.getInstance().exists(request.getApiKey())) {
+            if (!ApplicationManager.getInstance().existsWithApiKey(request.getApiKey())) {
                 throw new MailException("Unrecognized API key");
-            } else if (!ApplicationManager.getInstance().isEnabled(request.getApiKey())) {
-                throw new MailException("Disabled API key");
             } else if (request.getHtml() == null && request.getText() == null) {
                 throw new MailException("Missing content");
             }
@@ -153,18 +161,24 @@ public class SendServlet extends HttpServlet {
             response = new SendResponse(500, e.getMessage());
         }
 
-        resp.setStatus(response.getStatus());
-        resp.setContentType("application/json");
-        resp.getWriter().println(response.toJSON().toString());
+        try {
+            resp.setStatus(response.getStatus());
+            resp.setContentType("application/json");
+            resp.getWriter().println(response.toJSON().toString());
+        } catch (JSONException e) {
+            throw new IOException("Failed to write response", e);
+        }
 
         log.exiting(CLASS_NAME, "doGet");
     }
 
     /**
-     * TODO: JavaDoc
+     * Sends an email based on the information contained within the specified {@code request}.
      * 
      * @param request
+     *            the {@link SendRequest} to be used
      * @throws MailException
+     *             If an error occurs while constructing or sending the email.
      */
     private void sendMail(SendRequest request) throws MailException {
         log.entering(CLASS_NAME, "sendMail", request);

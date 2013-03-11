@@ -24,24 +24,24 @@ import com.google.appengine.labs.repackaged.org.json.JSONException;
 import com.google.appengine.labs.repackaged.org.json.JSONObject;
 
 /**
- * TODO: JavaDoc
+ * Contains information used in response to a {@link SendRequest}.
  * 
  * @author Alasdair Mercer <mercer.alasdair@gmail.com>
  */
 public class SendResponse {
 
     /**
-     * TODO: JavaDoc
+     * Creates a new instance of {@link SendResponse} based on the values derived from the specified {@code json}.
      * 
      * @param json
-     * @return
+     *            the {@code JSONObject} from which the details are to be derived
+     * @return The {@link SendResponse} derived from {@code json}.
      * @throws JSONException
+     *             If {@code json} is malformed.
      * @throws NullPointerException
+     *             If {@code json} is {@code null}.
      */
     public static SendResponse fromJSON(JSONObject json) throws JSONException {
-        if (json == null) {
-            return null;
-        }
         return new SendResponse(json.getInt("status"), json.optString("error"));
     }
 
@@ -49,19 +49,22 @@ public class SendResponse {
     private int status;
 
     /**
-     * TODO: JavaDoc
+     * Creates a new instance of {@link SendResponse} with the specified {@code status} code but no error message.
      * 
      * @param status
+     *            the status code to be used
      */
     public SendResponse(int status) {
         this(status, null);
     }
 
     /**
-     * TODO: JavaDoc
+     * Creates a new instance of {@link SendResponse} with the {@code status} code and {@code error} message provided.
      * 
      * @param status
+     *            the status code to be used
      * @param error
+     *            the error message to be used
      */
     public SendResponse(int status, String error) {
         setStatus(status);
@@ -69,48 +72,56 @@ public class SendResponse {
     }
 
     /**
-     * TODO: JavaDoc
+     * Returns the error message for this response.
      * 
-     * @return
+     * @return The error message.
      */
     public String getError() {
         return error;
     }
 
     /**
-     * TODO: JavaDoc
+     * Sets the error message for this response to {@code error}.
      * 
      * @param error
+     *            the error message to be set
      */
     public void setError(String error) {
         this.error = error;
     }
 
     /**
-     * TODO: JavaDoc
+     * Returns the status code for this response.
      * 
-     * @return
+     * @return The status code.
      */
     public int getStatus() {
         return status;
     }
 
     /**
-     * TODO: JavaDoc
+     * Sets the status code for this response to {@code status}.
      * 
      * @param status
+     *            the status code to be set
      */
     public void setStatus(int status) {
         this.status = status;
     }
 
     /**
-     * TODO: JavaDoc
+     * Creates a {@code JSONObject} based on this {@link SendResponse}.
      * 
-     * @return
+     * @return The derived {@code JSONObject}.
+     * @throws JSONException
+     *             If this {@link SendResponse} is malformed.
      */
-    public JSONObject toJSON() {
-        return new JSONObject(this);
+    public JSONObject toJSON() throws JSONException {
+        JSONObject json = new JSONObject();
+        json.putOpt("error", error);
+        json.putOpt("status", status);
+
+        return json;
     }
 
     /*

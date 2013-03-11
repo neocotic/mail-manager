@@ -29,7 +29,7 @@ import com.google.appengine.labs.repackaged.org.json.JSONException;
 import com.google.appengine.labs.repackaged.org.json.JSONObject;
 
 /**
- * TODO: JavaDoc
+ * Contains information which is to be used to construct and send an email message.
  * 
  * @author Alasdair Mercer <mercer.alasdair@gmail.com>
  */
@@ -40,7 +40,7 @@ public class SendRequest {
      * 
      * @param json
      *            the {@code JSONObject} from which the details are to be derived
-     * @return The {@code SendRequest} derived from {@code json}.
+     * @return The {@link SendRequest} derived from {@code json}.
      * @throws IllegalArgumentException
      *             If any of the required derived values are invalid.
      * @throws JSONException
@@ -270,13 +270,27 @@ public class SendRequest {
     }
 
     /**
-     * TODO: JavaDoc
+     * Creates a {@code JSONObject} based on this {@link SendRequest}.
      * 
-     * @return
+     * @return The derived {@code JSONObject}.
+     * @throws JSONException
+     *             If this {@link SendRequest} is malformed.
      */
-    public JSONObject toJSON() {
-        // TODO: Test sender/recipients are handled correctly here
-        return new JSONObject(this);
+    public JSONObject toJSON() throws JSONException {
+        JSONObject json = new JSONObject();
+        json.put("apiKey", apiKey);
+        json.putOpt("html", html);
+        json.put("sender", sender.toJSON());
+        json.put("subject", subject);
+        json.putOpt("text", text);
+
+        JSONArray array = new JSONArray();
+        for (Contact recipient : recipients) {
+            array.put(recipient.toJSON());
+        }
+        json.put("recipients", array);
+
+        return json;
     }
 
     /*
