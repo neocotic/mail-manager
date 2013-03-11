@@ -64,7 +64,7 @@ public class Contact {
      *             If {@code json} is {@code null}.
      */
     public static Contact fromJSON(JSONObject json) throws JSONException {
-        return new Contact(json.getString("email"), json.optString("name"));
+        return new Contact(json.getString("email"), json.optString("name", null));
     }
 
     private String email;

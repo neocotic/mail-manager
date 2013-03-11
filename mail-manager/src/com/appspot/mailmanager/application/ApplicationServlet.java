@@ -21,6 +21,7 @@
 package com.appspot.mailmanager.application;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
@@ -59,7 +60,7 @@ public class ApplicationServlet extends HttpServlet {
         } else if (name != null && !name.isEmpty()) {
             ApplicationManager.getInstance().removeByName(name);
         } else {
-            resp.sendError(500);
+            resp.sendError(500, "API key or name not specified");
         }
 
         log.exiting(CLASS_NAME, "doDelete");
@@ -82,17 +83,19 @@ public class ApplicationServlet extends HttpServlet {
         } else if (name != null && !name.isEmpty()) {
             application = ApplicationManager.getInstance().getByName(name);
         } else {
-            resp.sendError(500);
+            resp.sendError(500, "API key or name not specified");
+            return;
         }
 
         if (application == null) {
-            resp.sendError(404);
+            resp.sendError(404, "Application not found");
         } else {
             try {
                 resp.setContentType("application/json");
                 resp.getWriter().println(application.toJSON().toString());
             } catch (JSONException e) {
-                throw new IOException("Failed to write response", e);
+                log.log(Level.FINER, "Caught exception", e);
+                resp.sendError(500, "Failed to write response");
             }
         }
 
@@ -100,7 +103,7 @@ public class ApplicationServlet extends HttpServlet {
     }
 
     /*
-     * @see HttpServlet#doPut(HttpServletRequest, http.HttpServletResponse)
+     * @see HttpServlet#doPut(HttpServletRequest, HttpServletResponse)
      */
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -109,19 +112,28 @@ public class ApplicationServlet extends HttpServlet {
         String name = getInput("name", req);
 
         if (name == null || name.isEmpty()) {
-            resp.sendError(500);
+            resp.sendError(500, "Name not specified");
+            return;
         }
 
-        Application application = ApplicationManager.getInstance().add(name);
+        ApplicationManager manager = ApplicationManager.getInstance();
+
+        if (manager.existsWithName(name)) {
+            resp.sendError(500, "Application already exists");
+            return;
+        }
+
+        Application application = manager.add(name);
 
         if (application == null) {
-            resp.sendError(500);
+            resp.sendError(500, "Application not created");
         } else {
             try {
                 resp.setContentType("application/json");
                 resp.getWriter().println(application.toJSON().toString());
             } catch (JSONException e) {
-                throw new IOException("Failed to write response", e);
+                log.log(Level.FINER, "Caught exception", e);
+                resp.sendError(500, "Failed to write response");
             }
         }
 

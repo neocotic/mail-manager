@@ -42,6 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.appspot.mailmanager.Contact;
 import com.appspot.mailmanager.MailException;
+import com.appspot.mailmanager.application.Application;
 import com.appspot.mailmanager.application.ApplicationManager;
 import com.google.appengine.labs.repackaged.org.json.JSONException;
 import com.google.appengine.labs.repackaged.org.json.JSONObject;
@@ -137,16 +138,13 @@ public class SendServlet extends HttpServlet {
     }
 
     /*
-     * @see HttpServlet#doGet(HttpServletRequest, HttpServletResponse)
+     * @see HttpServlet#doPost(HttpServletRequest, HttpServletResponse)
      */
-    public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        log.entering(CLASS_NAME, "doGet", new Object[] { req, resp });
-
-        SendRequest request = null;
-        SendResponse response = null;
+    public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        log.entering(CLASS_NAME, "doPost", new Object[] { req, resp });
 
         try {
-            request = deriveSendRequest(req);
+            SendRequest request = deriveSendRequest(req);
 
             if (!ApplicationManager.getInstance().existsWithApiKey(request.getApiKey())) {
                 throw new MailException("Unrecognized API key");
@@ -155,21 +153,12 @@ public class SendServlet extends HttpServlet {
             }
 
             sendMail(request);
-
-            response = new SendResponse(200);
         } catch (MailException e) {
-            response = new SendResponse(500, e.getMessage());
+            log.log(Level.FINER, "Caught exception", e);
+            resp.sendError(500, e.getMessage());
         }
 
-        try {
-            resp.setStatus(response.getStatus());
-            resp.setContentType("application/json");
-            resp.getWriter().println(response.toJSON().toString());
-        } catch (JSONException e) {
-            throw new IOException("Failed to write response", e);
-        }
-
-        log.exiting(CLASS_NAME, "doGet");
+        log.exiting(CLASS_NAME, "doPost");
     }
 
     /**

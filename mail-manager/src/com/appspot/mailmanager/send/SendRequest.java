@@ -51,10 +51,10 @@ public class SendRequest {
     public static SendRequest fromJSON(JSONObject json) throws JSONException {
         SendRequest request = new SendRequest();
         request.setApiKey(json.getString("apiKey"));
-        request.setHtml(json.optString("html"));
+        request.setHtml(json.optString("html", null));
         request.setSender(Contact.fromJSON(json.getJSONObject("sender")));
         request.setSubject(json.getString("subject"));
-        request.setText(json.optString("text"));
+        request.setText(json.optString("text", null));
 
         JSONArray recipients = json.getJSONArray("recipients");
         for (int i = 0; i < recipients.length(); i++) {

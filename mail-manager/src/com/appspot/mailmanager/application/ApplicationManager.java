@@ -20,11 +20,9 @@
  */
 package com.appspot.mailmanager.application;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import com.appspot.mailmanager.send.SendServlet;
@@ -123,14 +121,7 @@ public class ApplicationManager {
     private String generateApiKey() {
         log.entering(CLASS_NAME, "generateApiKey");
 
-        String apiKey;
-
-        try {
-            Random random = SecureRandom.getInstance("SHA1withRSA");
-            apiKey = Long.toHexString(random.nextLong());
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        String apiKey = UUID.randomUUID().toString();
 
         log.exiting(CLASS_NAME, "generateApiKey", apiKey);
         return apiKey;
@@ -200,8 +191,9 @@ public class ApplicationManager {
 
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         Query query = new Query(Application.KIND).setFilter(new Query.FilterPredicate(property, Query.FilterOperator.EQUAL, value));
+        Entity entity = datastore.prepare(query).asSingleEntity();
 
-        Application application = Application.fromEntity(datastore.prepare(query).asSingleEntity());
+        Application application = entity == null ? null : Application.fromEntity(entity);
 
         log.exiting(CLASS_NAME, "getWithProperty", application);
         return application;
